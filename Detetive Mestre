@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define TAM 10 // tamanho da tabela hash
+
+// Estrutura para armazenar um nó da lista encadeada (tratamento de colisões)
+typedef struct No {
+    char pista[50];
+    char suspeito[50];
+    struct No *prox;
+} No;
+
+// Vetor principal da tabela hash (array de ponteiros)
+No *tabela[TAM];
+
+// Função de espalhamento simples (soma dos caracteres ASCII)
+int funcaoHash(char *pista) {
+    int soma = 0;
+    for (int i = 0; pista[i] != '\0'; i++) {
+        soma += pista[i];
+    }
+    return soma % TAM;
+}
+
+// Inicializa a tabela hash
+void inicializarTabela() {
+    for (int i = 0; i < TAM; i++) {
+        tabela[i] = NULL;
+    }
+}
+
+// Insere uma relação pista → suspeito na tabela
+void inserirNaHash(char *pista, char *suspeito) {
+    int indice = funcaoHash(pista);
+    
+    // Cria novo nó
+    No *novo = (No *)malloc(sizeof(No));
+    strcpy(novo->pista, pista);
+    strcpy(novo->suspeito, suspeito);
+    novo->prox = NULL;
+
+    // Inserção no início da lista encadeada (tratamento de colisão)
+    if (tabela[indice] == NULL) {
+        tabela[indice] = novo;
+    } else {
+        novo->prox = tabela[indice];
+        tabela[indice] = novo;
+    }
+}
+
+// Exibe todas as relações armazenadas
+void exibirTabela() {
+    printf("\n=== Relações pista → suspeito ===\n");
+    for (int i = 0; i < TAM; i++) {
+        No *aux = tabela[i];
+        while (aux != NULL) {
+            printf("Pista: %-20s | Suspeito: %s\n", aux->pista, aux->suspeito);
+            aux = aux->prox;
+        }
+    }
+}
+
+// Mostra qual suspeito foi mais citado nas pistas
+void suspeitoMaisCitado() {
+    // Estrutura auxiliar para contagem de ocorrências
+    char suspeitos[50][50];
+    int contagem[50];
+    int qtdSuspeitos = 0;
+
+    // Percorre toda a tabela
+    for (int i = 0; i < TAM; i++) {
+        No *aux = tabela[i];
+        while (aux != NULL) {
+            int encontrado = 0;
+
+            // Verifica se o suspeito já está na lista
+            for (int j = 0; j < qtdSuspeitos; j++) {
+                if (strcmp(suspeitos[j], aux->suspeito) == 0) {
+                    contagem[j]++;
+                    encontrado = 1;
+                    break;
+                }
+            }
+
+            // Se não estiver, adiciona novo suspeito
+            if (!encontrado) {
+                strcpy(suspeitos[qtdSuspeitos], aux->suspeito);
+                contagem[qtdSuspeitos] = 1;
+                qtdSuspeitos++;
+            }
+
+            aux = aux->prox;
+        }
+    }
+
+    // Encontra o mais citado
+    int max = 0;
+    char culpado[50];
+    strcpy(culpado, "Nenhum");
+
+    for (int i = 0; i < qtdSuspeitos; i++) {
+        if (contagem[i] > max) {
+            max = contagem[i];
+            strcpy(culpado, suspeitos[i]);
+        }
+    }
+
+    printf("\n👀 Suspeito mais citado: %s (%d pistas associadas)\n", culpado, max);
+}
+
+int main() {
+    inicializarTabela();
+
+    // Inserções simuladas (pistas e suspeitos)
+    inserirNaHash("Luvas sujas", "Carlos");
+    inserirNaHash("Pegadas na cozinha", "Marina");
+    inserirNaHash("Copo quebrado", "Carlos");
+    inserirNaHash("Anel de ouro", "Fernanda");
+    inserirNaHash("Porta arrombada", "Carlos");
+    inserirNaHash("Bilhete misterioso", "Marina");
+
+    exibirTabela();
+    suspeitoMaisCitado();
+
+    return 0;
+}
