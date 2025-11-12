@@ -1,0 +1,144 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Estrutura da sala (árvore binária da mansão)
+typedef struct Sala {
+    char nome[50];
+    struct Sala *esquerda;
+    struct Sala *direita;
+    char pista[50]; // pista associada à sala (se existir)
+} Sala;
+
+// Estrutura da árvore de busca (BST) de pistas
+typedef struct NoPista {
+    char pista[50];
+    struct NoPista *esquerda;
+    struct NoPista *direita;
+} NoPista;
+
+// === Funções da árvore de pistas ===
+
+// Cria um novo nó de pista
+NoPista* criarNoPista(char *p) {
+    NoPista *novo = (NoPista*)malloc(sizeof(NoPista));
+    strcpy(novo->pista, p);
+    novo->esquerda = NULL;
+    novo->direita = NULL;
+    return novo;
+}
+
+// Insere uma pista na BST
+NoPista* inserirPista(NoPista *raiz, char *p) {
+    if (raiz == NULL)
+        return criarNoPista(p);
+
+    if (strcmp(p, raiz->pista) < 0)
+        raiz->esquerda = inserirPista(raiz->esquerda, p);
+    else if (strcmp(p, raiz->pista) > 0)
+        raiz->direita = inserirPista(raiz->direita, p);
+
+    return raiz;
+}
+
+// Exibe todas as pistas em ordem alfabética
+void emOrdem(NoPista *raiz) {
+    if (raiz != NULL) {
+        emOrdem(raiz->esquerda);
+        printf(" - %s\n", raiz->pista);
+        emOrdem(raiz->direita);
+    }
+}
+
+// === Funções da mansão (árvore de salas) ===
+
+Sala* criarSala(char nome[], char pista[]) {
+    Sala* novaSala = (Sala*)malloc(sizeof(Sala));
+    strcpy(novaSala->nome, nome);
+    strcpy(novaSala->pista, pista);
+    novaSala->esquerda = NULL;
+    novaSala->direita = NULL;
+    return novaSala;
+}
+
+void explorarSalas(Sala* salaAtual, NoPista **raizPistas) {
+    char opcao;
+
+    while (1) {
+        printf("\nVocê está em: %s\n", salaAtual->nome);
+
+        // Se a sala tiver pista, adiciona na BST
+        if (strlen(salaAtual->pista) > 0) {
+            printf("Você encontrou uma pista: \"%s\"!\n", salaAtual->pista);
+            *raizPistas = inserirPista(*raizPistas, salaAtual->pista);
+        }
+
+        printf("\nEscolha um caminho:\n");
+        printf(" [e] Ir para a esquerda\n");
+        printf(" [d] Ir para a direita\n");
+        printf(" [p] Ver pistas encontradas\n");
+        printf(" [s] Sair da exploração\n");
+        printf("Opção: ");
+        scanf(" %c", &opcao);
+
+        if (opcao == 's') {
+            printf("\nSaindo da exploração...\n");
+            break;
+        }
+        else if (opcao == 'e') {
+            if (salaAtual->esquerda != NULL)
+                salaAtual = salaAtual->esquerda;
+            else
+                printf("Não há sala à esquerda!\n");
+        }
+        else if (opcao == 'd') {
+            if (salaAtual->direita != NULL)
+                salaAtual = salaAtual->direita;
+            else
+                printf("Não há sala à direita!\n");
+        }
+        else if (opcao == 'p') {
+            printf("\n=== Pistas encontradas (em ordem alfabética) ===\n");
+            if (*raizPistas == NULL)
+                printf("Nenhuma pista encontrada ainda.\n");
+            else
+                emOrdem(*raizPistas);
+        }
+        else {
+            printf("Opção inválida!\n");
+        }
+    }
+}
+
+int main() {
+    // Criação da mansão (árvore binária)
+    Sala* hallEntrada = criarSala("Hall de Entrada", "");
+    Sala* salaEstar   = criarSala("Sala de Estar", "Pegadas misteriosas");
+    Sala* cozinha     = criarSala("Cozinha", "Copo quebrado");
+    Sala* biblioteca  = criarSala("Biblioteca", "Livro rasgado");
+    Sala* jardim      = criarSala("Jardim", "");
+    Sala* escritorio  = criarSala("Escritório", "Carta enigmática");
+
+    // Conectando as salas (estrutura fixa)
+    hallEntrada->esquerda = salaEstar;
+    hallEntrada->direita  = cozinha;
+
+    salaEstar->esquerda = biblioteca;
+    salaEstar->direita  = jardim;
+
+    cozinha->direita = escritorio;
+
+    // Árvore de pistas (BST)
+    NoPista *raizPistas = NULL;
+
+    printf("=== Detective Quest - Nível Aventureiro ===\n");
+    printf("Explore a mansão e colete pistas!\n");
+
+    explorarSalas(hallEntrada, &raizPistas);
+
+    printf("\n=== Pistas finais encontradas ===\n");
+    emOrdem(raizPistas);
+
+    printf("\nPrograma encerrado.\n");
+    return 0;
+}
